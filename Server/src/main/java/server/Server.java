@@ -6,8 +6,6 @@ import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// TODO: 02.03.2021
-// notify about connect / disconnect
 
 public class Server {
         public Server() {
