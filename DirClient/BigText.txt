@@ -1,0 +1,60 @@
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Orientation;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Main extends Application {
+    @Override
+    public void start(Stage window) throws Exception {
+        window.setTitle("JavaFX");
+        VBox root = new VBox();
+
+        Button btnAdd = new Button("Добавить");
+        ListView<List> sourceList = new ListView();
+        sourceList.setOrientation(Orientation.VERTICAL);
+
+        btnAdd.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                sourceList.getItems().clear();
+                sourceList.getItems().addAll(getSource());
+            }
+        });
+        root.getChildren().addAll(sourceList,btnAdd);
+        window.setScene(new Scene(root, 450, 275));
+        window.show();
+    }
+
+    public static List<String> list = new ArrayList<>();
+
+    public static List<String> getSource(){
+        try {
+            File folder = new File("pdf/");
+            String[] files = folder.list(new FilenameFilter(){
+                @Override public boolean accept(File folder, String name) {
+                    return name.endsWith(".pdf");
+                }
+            });
+            for ( String fileName : files ) {
+               list.add(fileName);
+            }
+
+        }catch (NullPointerException e){
+            System.out.println("Ошибка" + e.getMessage());
+        }
+        return list;
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+1
