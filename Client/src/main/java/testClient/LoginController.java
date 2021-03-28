@@ -6,11 +6,12 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class LoginController implements Initializable {
+public class LoginController implements Initializable, Closeable {
 
     private NetSer netSer;
     private ClientPath path;
@@ -24,13 +25,7 @@ public class LoginController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         path = new ClientPath();
-
-
-        try {
-            netSer = new NetSer();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        netSer = new NetSer();
     }
 
     public void btLogin(ActionEvent actionEvent) {
@@ -45,6 +40,8 @@ public class LoginController implements Initializable {
                 System.out.println(path.getPath());
                 System.out.println("in login");
                 new Client();
+                netSer.Out().writeUTF("close");
+                close();
                 loginTF.getScene().getWindow().hide();
             }
         } catch (IOException e) {
@@ -55,5 +52,12 @@ public class LoginController implements Initializable {
 
     public void btReg(ActionEvent actionEvent) {
         new Regs();
+    }
+
+    @Override
+    public void close() throws IOException {
+        System.out.println("Окно логина было закрыто...");
+        netSer.close();
+
     }
 }

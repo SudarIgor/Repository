@@ -2,15 +2,18 @@ package testClient;
 
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MultipleSelectionModel;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
-
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
@@ -23,6 +26,10 @@ public class ClientController implements Initializable {
 
     private NetSer netSer;
     private String serverDir;
+    private ListView <String> clientListView;
+    List<String> list;
+    private static String pathClient;
+    private String pathServer;
 
     @FXML
     Pane serverPane, clientPane;
@@ -30,39 +37,34 @@ public class ClientController implements Initializable {
     @FXML
     TextField pathFieldServer, pathFieldClient;
 
-
-    public ListView <String> clientListView;
-
     @FXML
     TextField pathField;
 
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
-
 
         try {
             netSer = new NetSer();
             serverDir = ClientPath.getPath();
             netSer.Out().writeUTF("ServDir");
             netSer.Out().writeUTF(serverDir);
+            pathClient = "ClientRoot";
+
             updateClientList();
             System.out.println("updateClientList()");
             updateServerList();
             System.out.println("updateServerList()");
+
+
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
-
-
     private void updateClientList() {
-        List<String> list = new ArrayList<>();
-        File file = new File("DirClient");
+        list = new ArrayList<>();
+        File file = new File(pathClient);
         String[] files = file.list();
 
         for (String fileName : files) {
@@ -70,11 +72,34 @@ public class ClientController implements Initializable {
         ObservableList<String> langs = FXCollections.observableArrayList(list);
         ListView<String> langsListView = new ListView<String>(langs);
         clientPane.getChildren().addAll(langsListView);
-
         clientListView = new ListView<String>(langs);
 
 
+        MultipleSelectionModel<String> langsSelectionModel = langsListView.getSelectionModel();
+        langsSelectionModel.setSelectionMode(SelectionMode.MULTIPLE);
+        langsSelectionModel.selectedItemProperty().addListener(new ChangeListener<String>(){
+            public void changed(ObservableValue<? extends String> changed, String oldValue, String newValue){
+                String selectedItems = "";
+                ObservableList<String> selected = langsSelectionModel.getSelectedItems();
+                for (String item : selected){
+                    selectedItems += item;
+                }
+                File file1 = new File(pathClient + File.separator + selectedItems);
+               if(file1.isFile()) pathField.setText(selectedItems);
+               else {
+                   pathClient += File.separator.concat(selectedItems);
+                   updateClientList();
+               }
+
+            }
+        });
+
+        if (file.getParent()== null) {
+            pathFieldClient.setText("ClientRoot");
+        }else pathFieldClient.setText(file.getPath());
     }
+
+
 
     private void updateServerList() {
         List<String> list = downloadFileList();
@@ -84,15 +109,12 @@ public class ClientController implements Initializable {
 
     }
 
-    public static List<String> list = new ArrayList<>();
-
-
     private List<String> downloadFileList() {
         List<String> list = new ArrayList<>();
         try {
             StringBuilder sb = new StringBuilder();
             netSer.Out().writeUTF("list-files");
-//            if(netSer.In().readUTF().equals("sleep")) return list;
+
             while (true) {
                 byte[] buffer = new byte[512];
                 int size = netSer.In().read(buffer);
@@ -117,7 +139,7 @@ public class ClientController implements Initializable {
         if(!filename.equals("")) {
             try {
 
-                File file = new File("DirClient" + File.separator + filename);
+                File file = new File(pathClient + File.separator + filename);
                 if (file.exists()) {
                     netSer.Out().writeUTF("upload");
                     netSer.Out().writeUTF(filename);
@@ -164,7 +186,7 @@ public class ClientController implements Initializable {
         }
     }
 
-    public void btDounload(ActionEvent actionEvent) {
+    public void btDownload(ActionEvent actionEvent) {
         try {
             String filename = pathField.getText();
             netSer.Out().writeUTF("download");
@@ -174,7 +196,7 @@ public class ClientController implements Initializable {
                 pathField.setText("the file is missing");
             }
             else{
-                File file = new File("DirClient" + File.separator + filename);
+                File file = new File(pathClient + File.separator + filename);
                 if (!file.exists()) {
                     file.createNewFile();
                 }
@@ -199,7 +221,15 @@ public class ClientController implements Initializable {
     public void exitFromClient(ActionEvent actionEvent) {
         Platform.exit();
     }
-    public void btPathUp(ActionEvent actionEvent) {
 
+    public void btPathUpServer(ActionEvent actionEvent) {
     }
+
+    public void btPathUpClient(ActionEvent actionEvent) {
+        File file = new File(pathClient);
+        if(!(file.getParent() == null)) {pathClient= file.getParent();
+        updateClientList();
+        }
+    }
+
 }

@@ -6,26 +6,26 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class NetSer {
-    private final Socket socket;
-    private final DataInputStream in;
-    private final DataOutputStream out;
-    private final int PORT = 1002;
+    private  Socket socket;
+    private  DataInputStream in;
+    private  DataOutputStream out;
+    private  int PORT = 1002;
     private static NetSer instance;
 
-    public NetSer() throws IOException {
-        socket = new Socket("localhost", PORT);
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
+    public NetSer()  {
+        try {
+            socket = new Socket("localhost", PORT);
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static NetSer getInstance()  {
         if (instance == null){
-            try {
-                instance = new NetSer();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            instance = new NetSer();
         }
         return instance;
     }
@@ -36,5 +36,16 @@ public class NetSer {
 
     public DataOutputStream Out() {
         return out;
+    }
+    public void close(){
+
+
+        try {
+            socket.close();
+            in.close();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

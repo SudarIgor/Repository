@@ -21,7 +21,7 @@
 
                 <TextField fx:id="pathFieldServer" editable="false" HBox.hgrow="ALWAYS"> <!--       editable="false" - запрет на прописывание в форме-->
                 </TextField>
-                <Button text="Up" onAction="#btPathUp"  />
+                <Button text="Up" onAction="#btPathUpServer"  />
 
             </HBox>
             <Pane fx:id="serverPane"/>
@@ -30,12 +30,10 @@
 
         <VBox spacing="5">
                 <TextField fx:id="pathField"  HBox.hgrow="ALWAYS"/>
-
                 <Button maxWidth="Infinity" text="Upload" onAction="#btUpload" HBox.hgrow="ALWAYS" focusTraversable="false"/>
                 <Button maxWidth="Infinity" text="Remove" onAction="#btRemove" HBox.hgrow="ALWAYS" focusTraversable="false"/>
-                <Button maxWidth="Infinity" text="Dounload" onAction="#btDounload" HBox.hgrow="ALWAYS" focusTraversable="false"/>
-                <Button maxWidth="Infinity" onAction="#exitFromClient" text="exit" HBox.hgrow="ALWAYS" focusTraversable="false"/>
-
+                <Button maxWidth="Infinity" text="Download" onAction="#btDownload" HBox.hgrow="ALWAYS" focusTraversable="false"/>
+                <Button maxWidth="Infinity" onAction="#exitFromClient" text="Exit" HBox.hgrow="ALWAYS" focusTraversable="false"/>
                 <padding>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                 </padding>
@@ -48,7 +46,7 @@
 
                 <TextField fx:id="pathFieldClient" editable="false" HBox.hgrow="ALWAYS"> <!--       editable="false" - запрет на прописывание в форме-->
                 </TextField>
-                <Button text="Up" onAction="#btPathUp"  />
+                <Button text="Up" onAction="#btPathUpClient"  />
 
             </HBox>
             <Pane fx:id="clientPane"/>

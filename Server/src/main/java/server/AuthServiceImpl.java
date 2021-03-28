@@ -7,19 +7,19 @@ public class AuthServiceImpl implements AuthService {
     private static AuthServiceImpl sample;
     private AuthServiceHandler userDao;
 
-    public AuthServiceImpl() throws SQLException, ClassNotFoundException {
-       userDao = new AuthServiceHandler();
+    public AuthServiceImpl() {
+        try {
+            userDao = new AuthServiceHandler();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 
     public static AuthServiceImpl getSample()  {
         if (sample == null){
-            try {
-                sample = new AuthServiceImpl();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
+            sample = new AuthServiceImpl();
         }
         return sample;
     }

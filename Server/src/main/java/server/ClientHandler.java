@@ -31,6 +31,38 @@ public class ClientHandler implements Runnable {
                     clientDir=in.readUTF();
                     System.out.println("test point \n" + clientDir);
                 }
+                else if(command.equals("close")){
+                    socket.close();
+                    in.close();
+                    out.close();
+                }
+                else if(command.equals("checkLogin")){
+                    boolean checkLogin;
+                    System.out.println("into check login");
+                    String login = in.readUTF();
+                    System.out.println("read login");
+                    checkLogin = authService.getSample().getUserDao().userExists(login);
+                    System.out.println("check login");
+                    if(checkLogin){
+                       out.writeBoolean(true);
+                        System.out.println("True");
+                    }else {
+                        out.writeBoolean(false);
+                        System.out.println("false");
+
+                    }
+                }
+                else if(command.equals("registration")){
+                    String login;
+                    String pass;
+                    System.out.println("check point 1");
+                    login = in.readUTF();
+                    pass = in.readUTF();
+                    System.out.println("login on server: " + login + " " + "password on server: "+ pass);
+                    new Registration(login,pass);
+                    System.out.println("check point 4");
+
+                }
                 else if (command.equals("auth")){
                     authService = AuthServiceImpl.getSample();
                      login = in.readUTF();
@@ -105,15 +137,14 @@ public class ClientHandler implements Runnable {
                 else if("list-files".equals(command)){
                     try {
                         File dir = new File(clientDir);
-
+                        if(!isDirectoryEmpty(dir)){
                             for (File file : dir.listFiles()) {
-
                                 byte[] bytes = file.getName().concat("\n").getBytes();
                                 out.write(bytes);
-//
                             }
                             out.write("end".getBytes());
-//                        }
+                        }else out.write("\nend".getBytes());
+//
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -128,4 +159,10 @@ public class ClientHandler implements Runnable {
             throwables.printStackTrace();
         }
     }
+
+    public boolean isDirectoryEmpty(File directory) {
+        String[] files = directory.list();
+        return files.length == 0;
+    }
+
 }

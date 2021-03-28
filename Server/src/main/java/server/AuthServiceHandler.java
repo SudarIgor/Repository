@@ -12,17 +12,17 @@ public class AuthServiceHandler implements Closeable {
 
     private static final String AUTH_TABLE =
 
-                "create table  if not exists USERS\n" +
-                "(\n" +
+            "create table  if not exists USERS\n" +
+                    "(\n" +
                     "USER_ID INTEGER  primary key autoincrement,\n" +
                     "LOGIN TEXT not null,\n" +
                     "PASSWORD TEXT not null,\n" +
                     "NICK TEXT default 'Name' not null\n" +
-                ");";
+                    ");";
 
     public AuthServiceHandler() throws ClassNotFoundException, SQLException {
         Class.forName("org.sqlite.JDBC");
-        connection = DriverManager.getConnection("jdbc:sqlite:UserAuthDB");
+        connection = DriverManager.getConnection("jdbc:sqlite:AuthDB");
         statement = connection.createStatement();
         statement.execute(AUTH_TABLE);
     }
@@ -80,9 +80,9 @@ public class AuthServiceHandler implements Closeable {
         }else {
             sql = String.format("INSERT INTO USERS (LOGIN, PASSWORD, NICK) " +
                             "VALUES ('%s', '%s', '%s');",
-                            user.getLogin(),
-                            user.getPassword(),
-                            user.getNick());
+                    user.getLogin(),
+                    user.getPassword(),
+                    user.getNick());
             System.out.println("Input User: " + user);
 
         }
@@ -92,10 +92,10 @@ public class AuthServiceHandler implements Closeable {
     public String getUser_id(String login) throws SQLException {
 
         String sql = String.format("SELECT USER_ID FROM USERS WHERE LOGIN = '%s'", login);
-       int id=0;
+        int id=0;
         ResultSet rs = statement.executeQuery(sql);
         while (rs.next()){
-          id = rs.getInt("USER_ID");
+            id = rs.getInt("USER_ID");
 
         }
 
@@ -110,7 +110,7 @@ public class AuthServiceHandler implements Closeable {
         String nick = null;
         ResultSet rs = statement.executeQuery(sql);
         while (rs.next()){
-          nick = rs.getString("NICK");
+            nick = rs.getString("NICK");
         }
 
         return nick;
@@ -131,9 +131,9 @@ public class AuthServiceHandler implements Closeable {
     public void changeUserNick(User user, String nick) throws SQLException {
         String sql;
 
-            sql = String.format("UPDATE USERS SET NICK = '%s' WHERE LOGIN = '%s'; ",
-                   nick,
-                   user.getLogin());
+        sql = String.format("UPDATE USERS SET NICK = '%s' WHERE LOGIN = '%s'; ",
+                nick,
+                user.getLogin());
 
         statement.execute(sql);
     }

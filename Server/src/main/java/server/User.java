@@ -14,7 +14,6 @@ public class User {
 
 
     public Integer getUser_id() {
-
         return user_id;
     }
 

@@ -14,7 +14,7 @@
 
       <TextField fx:id="loginTF" layoutX="26.0" layoutY="83.0" prefHeight="25.0" prefWidth="150.0" />
 
-      <PasswordField fx:id="passwordPF" layoutX="25.0" layoutY="140.0" prefHeight="25.0" prefWidth="150.0" />
+      <PasswordField fx:id="passwordPF" onAction="#btLogin" layoutX="25.0" layoutY="140.0" prefHeight="25.0" prefWidth="150.0" />
 
       <Button fx:id="logInBt" onAction="#btLogin" layoutX="70.0" layoutY="181.0" mnemonicParsing="false"  text="Login" />
       <Button fx:id="registrationBt" onAction="#btReg" layoutX="56.0" layoutY="220.0" mnemonicParsing="false"  text="Registration" />
