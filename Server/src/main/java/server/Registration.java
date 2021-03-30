@@ -15,7 +15,8 @@ public class Registration {
         String clientDir= null;
         try {
             clientDir = "serverDir" + File.separator + "client "
-                    .concat( authService.getUserDao().getUser_id(login));
+                    .concat( authService.getUserDao().getUser_id(login)
+                            .concat(File.separator + "ServerRoot"));
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }

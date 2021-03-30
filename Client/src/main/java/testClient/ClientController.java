@@ -16,20 +16,18 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 
 
 public class ClientController implements Initializable {
 
     private NetSer netSer;
-    private String serverDir;
+    private String pathDirClientOnServer;
     private ListView <String> clientListView;
     List<String> list;
     private static String pathClient;
     private String pathServer;
+    private String pathRootServer;
 
     @FXML
     Pane serverPane, clientPane;
@@ -45,17 +43,19 @@ public class ClientController implements Initializable {
 
         try {
             netSer = new NetSer();
-            serverDir = ClientPath.getPath();
+            pathDirClientOnServer = ClientPath.getPath();
             netSer.Out().writeUTF("ServDir");
-            netSer.Out().writeUTF(serverDir);
+            netSer.Out().writeUTF(pathDirClientOnServer);
+
+            pathServer = pathDirClientOnServer;
+            pathRootServer = pathDirClientOnServer.substring(0, pathDirClientOnServer.length()-10);
+
             pathClient = "ClientRoot";
 
             updateClientList();
             System.out.println("updateClientList()");
             updateServerList();
             System.out.println("updateServerList()");
-
-
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -66,13 +66,44 @@ public class ClientController implements Initializable {
         list = new ArrayList<>();
         File file = new File(pathClient);
         String[] files = file.list();
-
+        File file1;
         for (String fileName : files) {
-            list.add(fileName);}
+            file1 = new File(pathClient+File.separator+fileName);
+            if(file1.isDirectory()) list.add("Directory: " + fileName);
+            else list.add("File: " + fileName);
+        }
+        Collections.sort(list);
         ObservableList<String> langs = FXCollections.observableArrayList(list);
         ListView<String> langsListView = new ListView<String>(langs);
         clientPane.getChildren().addAll(langsListView);
         clientListView = new ListView<String>(langs);
+
+        MultipleSelectionModel<String> langsSelectionModel = langsListView.getSelectionModel();
+        langsSelectionModel.setSelectionMode(SelectionMode.MULTIPLE);
+        langsSelectionModel.selectedItemProperty().addListener(new ChangeListener<String>(){
+            public void changed(ObservableValue<? extends String> changed, String oldValue, String newValue){
+                String selectedItems = "";
+                ObservableList<String> selected = langsSelectionModel.getSelectedItems();
+                for (String item : selected){
+                    selectedItems += item;
+                }
+                if(selectedItems.startsWith("File: ")) pathField.setText(selectedItems.split("File: ")[1]);
+                else {
+                   pathClient += File.separator.concat(selectedItems.split("Directory: ")[1]);
+                   updateClientList();
+               }
+            }
+        });
+
+        if (file.getParent()== null) {
+            pathFieldClient.setText("ClientRoot");
+        }else pathFieldClient.setText(file.getPath());
+    }
+
+    private void updateServerList() {
+        List<String> list = downloadFileList();
+        ObservableList<String> langs = FXCollections.observableArrayList(list);
+        ListView<String> langsListView = new ListView<String>(langs);
 
 
         MultipleSelectionModel<String> langsSelectionModel = langsListView.getSelectionModel();
@@ -84,29 +115,26 @@ public class ClientController implements Initializable {
                 for (String item : selected){
                     selectedItems += item;
                 }
-                File file1 = new File(pathClient + File.separator + selectedItems);
-               if(file1.isFile()) pathField.setText(selectedItems);
-               else {
-                   pathClient += File.separator.concat(selectedItems);
-                   updateClientList();
-               }
-
+                if(selectedItems.startsWith("File: ")) pathField.setText(selectedItems.split("File: ")[1]);
+                else if (selectedItems.startsWith("Directory: ")) {
+                    pathServer+=File.separator + selectedItems.split("Directory: ")[1];
+                    System.out.println("new Dir " + pathServer);
+                    try {
+                        netSer.Out().writeUTF("new Dir "+selectedItems.split("Directory: ")[1]);
+                        updateServerList();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else return;
             }
         });
 
-        if (file.getParent()== null) {
-            pathFieldClient.setText("ClientRoot");
-        }else pathFieldClient.setText(file.getPath());
-    }
 
+        pathFieldServer.setText(pathServer.replace(pathRootServer,""));
 
-
-    private void updateServerList() {
-        List<String> list = downloadFileList();
-        ObservableList<String> langs = FXCollections.observableArrayList(list);
-        ListView<String> langsListView = new ListView<String>(langs);
         serverPane.getChildren().addAll(langsListView);
-
+        updateClientList();
     }
 
     private List<String> downloadFileList() {
@@ -125,6 +153,7 @@ public class ClientController implements Initializable {
             }
             String fileString = sb.substring(0, sb.toString().length() - 4);
             list = Arrays.asList(fileString.split("\n"));
+            Collections.sort(list);
         }catch (FileNotFoundException e){
             System.out.println(" FileNotFoundException");
         }catch (IOException e) {
@@ -223,6 +252,16 @@ public class ClientController implements Initializable {
     }
 
     public void btPathUpServer(ActionEvent actionEvent) {
+        try {
+            System.out.println("in SbtPathUpServer");
+            netSer.Out().writeUTF("getParentDir");
+            pathServer = netSer.In().readUTF();
+            System.out.println("new dir " + pathServer);
+            pathFieldServer.setText(pathServer.replace(pathRootServer,""));
+            updateServerList();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void btPathUpClient(ActionEvent actionEvent) {

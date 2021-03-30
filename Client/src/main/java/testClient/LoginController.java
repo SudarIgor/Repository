@@ -35,7 +35,6 @@ public class LoginController implements Initializable, Closeable {
             netSer.Out().writeUTF(passwordPF.getText());
             String ans = netSer.In().readUTF();
             if(ans.equals("login")){
-
                 path.setPath(netSer.In().readUTF());
                 System.out.println(path.getPath());
                 System.out.println("in login");
@@ -43,6 +42,11 @@ public class LoginController implements Initializable, Closeable {
                 netSer.Out().writeUTF("close");
                 close();
                 loginTF.getScene().getWindow().hide();
+            }
+            else {
+                loginTF.clear();
+                passwordPF.clear();
+                loginTF.setText("logging error");
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -12,7 +12,8 @@ public class ClientHandler implements Runnable {
     private final Socket socket;
     private String login;
     private String pass;
-    private String clientDir = "serverDir" +File.separator + " 0";
+    private static String rootDir;
+    private String clientDir = "serverDir" +File.separator + "client 0" + File.separator.concat("ServerRoot");
     private AuthServiceImpl authService;
 
     public ClientHandler(Socket socket) {
@@ -29,7 +30,7 @@ public class ClientHandler implements Runnable {
                 String command = in.readUTF();
                 if (command.equals("ServDir")){
                     clientDir=in.readUTF();
-                    System.out.println("test point \n" + clientDir);
+
                 }
                 else if(command.equals("close")){
                     socket.close();
@@ -55,12 +56,10 @@ public class ClientHandler implements Runnable {
                 else if(command.equals("registration")){
                     String login;
                     String pass;
-                    System.out.println("check point 1");
                     login = in.readUTF();
                     pass = in.readUTF();
                     System.out.println("login on server: " + login + " " + "password on server: "+ pass);
                     new Registration(login,pass);
-                    System.out.println("check point 4");
 
                 }
                 else if (command.equals("auth")){
@@ -69,14 +68,14 @@ public class ClientHandler implements Runnable {
                      pass = in.readUTF();
                      if (authService.auth(login,pass)){
                          out.writeUTF("login");
-                         if (login.equals("admin")){
-                             clientDir = "serverDir";
-                         }else {
-                             clientDir="serverDir" + File.separator + "client "
-                                     .concat( authService.getUserDao().getUser_id(login));
-                             out.writeUTF(clientDir);
-                         }
+                         clientDir="serverDir" + File.separator + "client "
+                                   .concat( authService.getUserDao().getUser_id(login))
+                                   .concat(File.separator + "ServerRoot");
+                         rootDir ="serverDir" + File.separator + "client "
+                                 .concat( authService.getUserDao().getUser_id(login))
+                                 .concat(File.separator + "ServerRoot");
 
+                         out.writeUTF(clientDir);
                      }else out.writeUTF("auth passed");
 
                 }
@@ -134,12 +133,31 @@ public class ClientHandler implements Runnable {
                         out.writeUTF("ERROR");
                     }
                 }
+                else  if (command.startsWith("new Dir ")){
+                    clientDir+=File.separator + command.split("new Dir ")[1];
+                    System.out.println("new dir on server: " + clientDir);
+                }
+                else  if(command.equals("getParentDir")){
+                    System.out.println("in getParentDir");
+                    File file = new File(clientDir);
+
+                    if(!file.getPath().equals(rootDir)) {
+                        clientDir = file.getParent();
+                        out.writeUTF(clientDir);
+                    }
+                    else {
+                        out.writeUTF(clientDir);
+                    }
+                    System.out.println("afte " + file.getPath());
+                }
                 else if("list-files".equals(command)){
                     try {
                         File dir = new File(clientDir);
+                        byte[] bytes = null;
                         if(!isDirectoryEmpty(dir)){
                             for (File file : dir.listFiles()) {
-                                byte[] bytes = file.getName().concat("\n").getBytes();
+                                if(file.isDirectory()) bytes = ("Directory: " + file.getName().concat("\n")).getBytes();
+                                else bytes = ("File: " + file.getName().concat("\n")).getBytes();
                                 out.write(bytes);
                             }
                             out.write("end".getBytes());
