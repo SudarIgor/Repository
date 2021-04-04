@@ -11,7 +11,6 @@ public class AuthServiceHandler implements Closeable {
 
 
     private static final String AUTH_TABLE =
-
             "create table  if not exists USERS\n" +
                     "(\n" +
                     "USER_ID INTEGER  primary key autoincrement,\n" +
@@ -20,11 +19,18 @@ public class AuthServiceHandler implements Closeable {
                     "NICK TEXT default 'Name' not null\n" +
                     ");";
 
-    public AuthServiceHandler() throws ClassNotFoundException, SQLException {
-        Class.forName("org.sqlite.JDBC");
+    public AuthServiceHandler()  {
+        try {
+            Class.forName("org.sqlite.JDBC");
+
         connection = DriverManager.getConnection("jdbc:sqlite:AuthDB");
         statement = connection.createStatement();
         statement.execute(AUTH_TABLE);
+        } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 
 
@@ -44,7 +50,6 @@ public class AuthServiceHandler implements Closeable {
     public User getUserByLogin(String login) throws SQLException {
         String sql = String.format("SELECT * FROM USERS WHERE LOGIN = '%s'", login);
         User user = new User(null,null);
-
         ResultSet rs = statement.executeQuery(sql);
         while (rs.next()){
             user.setUser_id(rs.getInt("USER_ID"));
@@ -55,16 +60,21 @@ public class AuthServiceHandler implements Closeable {
         return user;
     }
 
-    public User getUserByUser_id (Integer id) throws SQLException {
+    public User getUserByUser_id (Integer id)  {
         String sql = String.format("SELECT * FROM USERS WHERE USER_ID = %d", id);
         User user = new User(null,null);
-        ResultSet rs = statement.executeQuery(sql);
-        while (rs.next()){
-            user.setUser_id(rs.getInt("USER_ID"));
-            user.setLogin(rs.getString("LOGIN"));
-            user.setPassword(rs.getString("PASSWORD"));
-            user.setNick(rs.getString("NICK"));
-        }
+        ResultSet rs = null;
+        try {
+            rs = statement.executeQuery(sql);
+            while (rs.next()){
+                user.setUser_id(rs.getInt("USER_ID"));
+                user.setLogin(rs.getString("LOGIN"));
+                user.setPassword(rs.getString("PASSWORD"));
+                user.setNick(rs.getString("NICK"));
+            }
+        } catch (SQLException throwables) {
+        throwables.printStackTrace();
+    }
         return user;
     }
 
@@ -90,18 +100,13 @@ public class AuthServiceHandler implements Closeable {
     }
 
     public String getUser_id(String login) throws SQLException {
-
         String sql = String.format("SELECT USER_ID FROM USERS WHERE LOGIN = '%s'", login);
         int id=0;
         ResultSet rs = statement.executeQuery(sql);
         while (rs.next()){
             id = rs.getInt("USER_ID");
-
         }
-
         return String.valueOf(id);
-
-//
     }
 
 
@@ -116,14 +121,19 @@ public class AuthServiceHandler implements Closeable {
         return nick;
     }
 
-    public String getUserPassword (User user) throws SQLException {
+    public String getUserPassword (User user) {
         String sql = String.format("SELECT PASSWORD FROM USERS WHERE LOGIN = '%s'", user.getLogin());
         String pass = null;
-        ResultSet rs = statement.executeQuery(sql);
-        while (rs.next()){
-            pass = rs.getString("PASSWORD");
-        }
+        ResultSet rs = null;
+        try {
+             rs = statement.executeQuery(sql);
 
+            while (rs.next()){
+                pass = rs.getString("PASSWORD");
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
         return pass;
     }
 

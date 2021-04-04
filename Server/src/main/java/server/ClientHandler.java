@@ -1,5 +1,7 @@
 package server;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -10,9 +12,12 @@ import java.sql.SQLException;
  */
 public class ClientHandler implements Runnable {
     private final Socket socket;
+    private final long MAX_SIZE_REP = 150_000_000l;
     private String login;
     private String pass;
     private static String rootDir;
+    private String stRepSize;
+    private long lgRepSize;
     private String clientDir = "serverDir" +File.separator + "client 0" + File.separator.concat("ServerRoot");
     private AuthServiceImpl authService;
 
@@ -30,7 +35,12 @@ public class ClientHandler implements Runnable {
                 String command = in.readUTF();
                 if (command.equals("ServDir")){
                     clientDir=in.readUTF();
-
+                }
+                else if (command.equals("getSizeRep")){
+                    lgRepSize = FileUtils.sizeOfDirectory(new File(rootDir));
+                    stRepSize =String.format("%,d bytes " , lgRepSize ) + "/" +
+                            String.format(" %,d bytes", MAX_SIZE_REP);
+                    out.writeUTF(stRepSize);
                 }
                 else if(command.equals("close")){
                     socket.close();
@@ -41,8 +51,8 @@ public class ClientHandler implements Runnable {
                     boolean checkLogin;
                     System.out.println("into check login");
                     String login = in.readUTF();
-                    System.out.println("read login");
-                    checkLogin = authService.getSample().getUserDao().userExists(login);
+                    // проверяем существует ли логин
+                    checkLogin = authService.getSample().getUser().userExists(login);
                     System.out.println("check login");
                     if(checkLogin){
                        out.writeBoolean(true);
@@ -58,7 +68,6 @@ public class ClientHandler implements Runnable {
                     String pass;
                     login = in.readUTF();
                     pass = in.readUTF();
-                    System.out.println("login on server: " + login + " " + "password on server: "+ pass);
                     new Registration(login,pass);
 
                 }
@@ -69,10 +78,10 @@ public class ClientHandler implements Runnable {
                      if (authService.auth(login,pass)){
                          out.writeUTF("login");
                          clientDir="serverDir" + File.separator + "client "
-                                   .concat( authService.getUserDao().getUser_id(login))
+                                   .concat( authService.getUser().getUser_id(login))
                                    .concat(File.separator + "ServerRoot");
                          rootDir ="serverDir" + File.separator + "client "
-                                 .concat( authService.getUserDao().getUser_id(login))
+                                 .concat( authService.getUser().getUser_id(login))
                                  .concat(File.separator + "ServerRoot");
 
                          out.writeUTF(clientDir);
@@ -81,19 +90,32 @@ public class ClientHandler implements Runnable {
                 }
                 else if ("upload".equals(command)) {
                     try {
-                        File file = new File(clientDir + File.separator + in.readUTF());
-                        if (!file.exists()) {
-                            file.createNewFile();
+                        // Получаем размер переданного файла
+                        System.out.println("in upload");
+                        long fileSize = in.readLong();
+                        System.out.println("получили размер файла");
+                        boolean flag = false;
+                        //Проверка возможности получить файл по размеру репозитори
+                        if ( (lgRepSize + (fileSize/1000) ) < MAX_SIZE_REP ) {
+                            flag = true;
+                            System.out.println(flag);
+                            out.writeBoolean(flag);
+                            File file = new File(clientDir + File.separator + in.readUTF());
+                            if (!file.exists()) {
+                                file.createNewFile();
+                            }
+                            long length = in.readLong();
+                            FileOutputStream fos = new FileOutputStream(file);
+                            byte[] buffer = new byte[256];
+                            for (int i = 0; i < (length + 255) / 256; i++) {
+                                int read = in.read(buffer);
+                                fos.write(buffer, 0, read);
+                            }
+                            fos.close();
+                            out.writeUTF("DONE");
+                        } else {
+                            out.writeBoolean(flag);
                         }
-                        long length = in.readLong();
-                        FileOutputStream fos = new FileOutputStream(file);
-                        byte[] buffer = new byte[256];
-                        for (int i = 0; i < (length + 255) / 256; i++) {
-                            int read = in.read(buffer);
-                            fos.write(buffer, 0, read);
-                        }
-                        fos.close();
-                        out.writeUTF("DONE");
                     } catch (Exception e) {
                         out.writeUTF("ERROR");
                     }
@@ -133,11 +155,11 @@ public class ClientHandler implements Runnable {
                         out.writeUTF("ERROR");
                     }
                 }
-                else  if (command.startsWith("new Dir ")){
+                else if (command.startsWith("new Dir ")){
                     clientDir+=File.separator + command.split("new Dir ")[1];
                     System.out.println("new dir on server: " + clientDir);
                 }
-                else  if(command.equals("getParentDir")){
+                else if(command.equals("getParentDir")){
                     System.out.println("in getParentDir");
                     File file = new File(clientDir);
 
@@ -166,6 +188,30 @@ public class ClientHandler implements Runnable {
                     }catch (Exception e){
                         e.printStackTrace();
                     }
+                }
+                else if(command.equals("changePass")){
+                    int user_id;
+                    String oldPass;
+                    System.out.println("into changePass");
+                    AuthServiceHandler authServiceHandler = new AuthServiceHandler();
+                    authService = new AuthServiceImpl();
+
+                    user_id= in.readInt();
+                    System.out.println("получили id " + user_id);
+                    oldPass = in.readUTF();
+                    System.out.println("получили старый пароль " + oldPass);
+                    String pass1 = authServiceHandler.getUserPassword(authServiceHandler.getUserByUser_id(user_id));
+                    System.out.println("взяли текущий пароль по id " + pass1);
+
+
+                    if(authServiceHandler.getUserPassword(authServiceHandler.getUserByUser_id(user_id)).equals(oldPass)){
+                          out.writeBoolean(true);
+                        String newPassword;
+                        System.out.println("получаем новый пароль");
+                        newPassword = in.readUTF();
+                        authServiceHandler.changeUserPassword(authServiceHandler.getUserByUser_id(user_id), newPassword);
+                        System.out.println("password changed");
+                    }else out.writeBoolean(false);
                 }
             }
         }catch (SocketException e){

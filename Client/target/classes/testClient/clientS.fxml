@@ -9,6 +9,8 @@
       xmlns:fx="http://javafx.com/fxml/1" fx:controller="testClient.ClientController">
     <MenuBar>
         <Menu text="Menu">
+            <MenuItem onAction="#ReLogin" text="ReLogin" />
+            <MenuItem onAction="#changePassword" text="Change password" />
             <MenuItem onAction="#exitFromClient" text="Exit" />
 
         </Menu>
@@ -25,6 +27,7 @@
 
             </HBox>
             <Pane fx:id="serverPane"/>
+            <Label fx:id="serverSize"/>
 
         </VBox>
 
@@ -33,7 +36,7 @@
                 <Button maxWidth="Infinity" text="Upload" onAction="#btUpload" HBox.hgrow="ALWAYS" focusTraversable="false"/>
                 <Button maxWidth="Infinity" text="Remove" onAction="#btRemove" HBox.hgrow="ALWAYS" focusTraversable="false"/>
                 <Button maxWidth="Infinity" text="Download" onAction="#btDownload" HBox.hgrow="ALWAYS" focusTraversable="false"/>
-                <Button maxWidth="Infinity" onAction="#exitFromClient" text="Exit" HBox.hgrow="ALWAYS" focusTraversable="false"/>
+
                 <padding>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                 </padding>

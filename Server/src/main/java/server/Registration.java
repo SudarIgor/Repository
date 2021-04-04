@@ -1,10 +1,6 @@
 package server;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 
 public class Registration {
@@ -15,7 +11,7 @@ public class Registration {
         String clientDir= null;
         try {
             clientDir = "serverDir" + File.separator + "client "
-                    .concat( authService.getUserDao().getUser_id(login)
+                    .concat( authService.getUser().getUser_id(login)
                             .concat(File.separator + "ServerRoot"));
         } catch (SQLException throwables) {
             throwables.printStackTrace();

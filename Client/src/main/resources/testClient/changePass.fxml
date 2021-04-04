@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<AnchorPane prefHeight="300.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="testClient.ChangePassController">
+    <Label layoutX="54.0" layoutY="14.0" prefHeight="38.0" prefWidth="96.0" text="Change password" textAlignment="CENTER" />
+
+
+    <Label layoutX="26.0" layoutY="63.0" prefHeight="20.0" prefWidth="107.0" text="old password:" />
+    <Label layoutX="26.0" layoutY="111.0" prefHeight="20.0" prefWidth="107.0" text="new password:" />
+
+    <Label layoutX="26.0" layoutY="163.0" prefHeight="20.0" prefWidth="107.0" text="Repeat new password:" />
+
+
+    <PasswordField fx:id="oldPassword" layoutX="26.0" layoutY="83.0" prefHeight="25.0" prefWidth="150.0" />
+    <PasswordField fx:id="newPassword" layoutX="26.0" layoutY="132.0" prefHeight="25.0" prefWidth="150.0" />
+    <PasswordField fx:id="newPasswordRep" layoutX="26.0" layoutY="181.0" onAction="#changePass" prefHeight="25.0" prefWidth="150.0" />
+    <Button fx:id="changePassword" layoutX="72.0" layoutY="244.0" mnemonicParsing="false" onAction="#changePass" text="Change" />
+    <Label fx:id="infoLabel" layoutX="26.0" layoutY="216.0" prefHeight="20.0" prefWidth="107.0" />
+
+</AnchorPane>

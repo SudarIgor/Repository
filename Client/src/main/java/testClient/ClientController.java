@@ -9,10 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import java.io.*;
 import java.net.URL;
@@ -28,6 +25,8 @@ public class ClientController implements Initializable {
     private static String pathClient;
     private String pathServer;
     private String pathRootServer;
+    private String sizeServerRep;
+    private long sizeFile;
 
     @FXML
     Pane serverPane, clientPane;
@@ -38,20 +37,23 @@ public class ClientController implements Initializable {
     @FXML
     TextField pathField;
 
+    @FXML
+    Label serverSize;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
         try {
             netSer = new NetSer();
+            //получаем директорию после логирования
             pathDirClientOnServer = ClientPath.getPath();
             netSer.Out().writeUTF("ServDir");
             netSer.Out().writeUTF(pathDirClientOnServer);
-
             pathServer = pathDirClientOnServer;
             pathRootServer = pathDirClientOnServer.substring(0, pathDirClientOnServer.length()-10);
-
             pathClient = "ClientRoot";
 
+            getSizeServerRep();
             updateClientList();
             System.out.println("updateClientList()");
             updateServerList();
@@ -60,6 +62,17 @@ public class ClientController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void getSizeServerRep() {
+        //получение размера используемого пространства в репозитории
+        try {
+            netSer.Out().writeUTF("getSizeRep");
+            sizeServerRep = netSer.In().readUTF();
+            serverSize.setText(sizeServerRep);
+        } catch (IOException e) {
+        e.printStackTrace();
+    }
     }
 
     private void updateClientList() {
@@ -72,6 +85,7 @@ public class ClientController implements Initializable {
             if(file1.isDirectory()) list.add("Directory: " + fileName);
             else list.add("File: " + fileName);
         }
+
         Collections.sort(list);
         ObservableList<String> langs = FXCollections.observableArrayList(list);
         ListView<String> langsListView = new ListView<String>(langs);
@@ -163,31 +177,52 @@ public class ClientController implements Initializable {
     return list;
 }
 
+    private long getFileSize(){
+        String filename = pathField.getText();
+        File file = new File(pathClient + File.separator + filename);
+        sizeFile =file.length();
+        System.out.println("out size file: " + sizeFile );
+        return sizeFile;
+    }
+
     public void btUpload(ActionEvent actionEvent) {
         String filename = pathField.getText();
         if(!filename.equals("")) {
             try {
+                 File file = new File(pathClient + File.separator + filename);
+                 if (file.exists()) {
+                     netSer.Out().writeUTF("upload");
+                     boolean flag;
+                     // отправляем на сервер размер файла
+                     netSer.Out().writeLong(getFileSize());
+                     System.out.println("out size file on server");
+                     flag = netSer.In().readBoolean();
+                     System.out.println("получили ответ по флагу ");
+                     // если в репозитории достаточно места передаем файл
+                     if (flag) {
+                            System.out.println(flag);
+                            netSer.Out().writeUTF(filename);
+                            long length = file.length();
+                            netSer.Out().writeLong(length);
+                            FileInputStream fis = new FileInputStream(file);
+                            int read = 0;
+                            byte[] buffer = new byte[256];
+                            while ((read = fis.read(buffer)) != -1) {
+                                netSer.Out().write(buffer, 0, read);
+                            }
+                            netSer.Out().flush();
+                            String status = netSer.In().readUTF();
+                            getSizeServerRep();
+                    }else {
+                         pathField.clear();
+                         pathField.setText("Репозиторий переполнен");
+                     }
+                 }else {
+                      pathField.setText("File is not exists");
+                 }
 
-                File file = new File(pathClient + File.separator + filename);
-                if (file.exists()) {
-                    netSer.Out().writeUTF("upload");
-                    netSer.Out().writeUTF(filename);
-                    long length = file.length();
-                    netSer.Out().writeLong(length);
-                    FileInputStream fis = new FileInputStream(file);
-                    int read = 0;
-                    byte[] buffer = new byte[256];
-                    while ((read = fis.read(buffer)) != -1) {
-                        netSer.Out().write(buffer, 0, read);
-                    }
-                    netSer.Out().flush();
-                    String status = netSer.In().readUTF();
-
-                } else {
-                    pathField.setText("File is not exists");
-                }
             } catch (FileNotFoundException e) {
-                System.out.println(" FileNotFoundException");
+                System.out.println("FileNotFoundException");
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("Something error");
@@ -210,6 +245,7 @@ public class ClientController implements Initializable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            getSizeServerRep();
             updateServerList();
             updateClientList();
         }
@@ -271,4 +307,20 @@ public class ClientController implements Initializable {
         }
     }
 
+//    выходим из клиентского окна и открываем окно логина
+    public void ReLogin(ActionEvent actionEvent) {
+        new Login();
+        try {
+            netSer.Out().writeUTF("close");
+            netSer.close();
+        } catch (IOException e) {
+        e.printStackTrace();
+    }
+        pathField.getScene().getWindow().hide();
+    }
+
+    public void changePassword(ActionEvent actionEvent) {
+
+        new ChangePass();
+    }
 }
