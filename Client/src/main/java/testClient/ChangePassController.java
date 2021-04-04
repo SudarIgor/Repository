@@ -24,9 +24,7 @@ public class ChangePassController implements Initializable, Closeable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         netSer = new NetSer();
-
         user_id = Integer.parseInt(ClientPath.getPath().split("\\\\")[1].split(" ")[1]);
-//        stUser_id=ClientPath.getPath().split("\\\\")[1].split(" ")[1];
         System.out.println(user_id);
     }
 
@@ -55,8 +53,6 @@ public class ChangePassController implements Initializable, Closeable {
             clearPasswordFields();
             infoLabel.setText("Error: different passwords");
         }
-
-
     }
 
     private boolean comparePassword() {
